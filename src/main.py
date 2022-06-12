@@ -1,5 +1,3 @@
-from email import message
-from subprocess import call
 from telebot import types
 import telebot
 
