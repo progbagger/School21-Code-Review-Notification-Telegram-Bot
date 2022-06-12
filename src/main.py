@@ -3,7 +3,9 @@ import telebot
 
 owner_id = '@astadasta'
 
-token = r'5598590455:AAE7KWLxOymGYoN0panqe07fMsloByWtuus'
+f = open("../token", "r")
+token = f.read()
+f.close()
 
 bot = telebot.TeleBot(token, parse_mode='markdown')
 
@@ -50,8 +52,8 @@ def help_command(message):
 
 @bot.message_handler(commands=['register'])
 def register(message):
-    bot.send_message(message.chat.id, 'В разработке...',
-                     reply_markup=default_markup)
+    bot.send_message(
+        message.chat.id, "Для регистрации понадобятся твои логин и пароль от платформы.\n\nВведи логин:", reply_markup=None)
 
 
 @bot.message_handler(commands=['unregister'])
