@@ -1,99 +1,90 @@
 from telebot import types
 import telebot
+import config
+import dbhandler
+import json
 
-owner_id = '@astadasta'
+# Owner info
+owner = config.OWNER
 
-f = open("../token", "r")
-token = f.read()
-f.close()
+bot = telebot.TeleBot(config.TOKEN, parse_mode=config.PARSE_MODE)
 
-bot = telebot.TeleBot(token, parse_mode='markdown')
+# Commands list and their descriptions
+commands = [
+    [
+        'link',
+        'help',
+        'register',
+        'unregister'
+    ],
+    [
+        'ссылка на платформу',
+        'список команд',
+        'регистрация в системе отслеживания',
+        'отмена регистрации'
+    ]
+]
 
-# Ссылка на сайт школы 21
-edu_url = r'https://edu.21-school.ru/'
+# Help message
+help_message = ''
+for command in commands[0]:
+    help_message += ('/' + command + ' - ' +
+                     commands[1][commands[0].index(command)] + '\n')
+help_message.rstrip('\n')
 
-# Сообщение списка комманд
-help_message = '/register - регистрация в системе отслеживания\n'
-help_message += '/unregister - отмена регистрации в системе отслеживания\n'
-help_message += '/help - вызов этого сообщения\n'
-help_message += '/edu - Ссылка на сайт личного кабинета школы 21'
-
-# Стандартные кнопки
-register = types.KeyboardButton('Регистрация')
-help_message_button = types.KeyboardButton('Список комманд')
-
-default_markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-default_markup.add(register, help_message_button)
-
-
-@bot.message_handler(commands=['edu'])
-def platform(message):
-    markup = types.InlineKeyboardMarkup()
-    url_button = types.InlineKeyboardButton('School 21', edu_url)
-    markup.add(url_button)
-    bot.send_message(message.chat.id, edu_url, reply_markup=markup)
+# Default keyboard buttons
+default_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+help_button = types.KeyboardButton('Список команд')
+link_button = types.KeyboardButton('Платформа')
+default_keyboard.add(help_button, link_button)
 
 
 @bot.message_handler(commands=['start'])
-def start(message):
-    start_message = f'*Привет, {message.from_user.first_name}!*\n\n'
-    start_message += 'Чтобы зарегистрироваться в системе, напиши /register.\n'
-    start_message += 'Если хочешь посмотреть список всех комманд - введи /help.'
-
-    bot.send_message(message.chat.id, start_message,
-                     reply_markup=default_markup)
+def start_handler(message: types.Message):
+    sticker = open('../assets/Hello.webp', 'rb')
+    bot.send_sticker(message.chat.id, sticker)
+    bot.send_message(
+        message.chat.id, f"Привет, **{message.from_user.first_name}**!\n"
+        + "Вот список доступных команд:\n\n"
+        + help_message, reply_markup=default_keyboard
+    )
 
 
 @bot.message_handler(commands=['help'])
-def help_command(message):
-    bot.send_message(message.chat.id, help_message,
-                     reply_markup=default_markup)
+def help_handler(message: types.Message):
+    bot.send_message(message.chat.id, help_message)
 
 
-@bot.message_handler(commands=['register'])
-def register(message):
+@bot.message_handler(commands=['link'])
+def url_handler(message: types.Message):
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    write_me_button = types.InlineKeyboardButton(
+        'Платформа школы 21', 'https://edu.21-school.ru/')
+    markup.add(write_me_button)
     bot.send_message(
-        message.chat.id, "Для регистрации понадобятся твои логин и пароль от платформы.\n\nВведи логин:", reply_markup=None)
+        message.chat.id, 'https://edu.21-school.ru/', reply_markup=markup)
 
 
-@bot.message_handler(commands=['unregister'])
-def unregister(message):
-    markup_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    yes_button_keyboard, no_button_keyboard = types.KeyboardButton(
-        'Да'), types.KeyboardButton('Нет')
-    markup_keyboard.add(yes_button_keyboard, no_button_keyboard)
-    markup_inline = types.InlineKeyboardMarkup(row_width=2)
-    yes_button_inline = types.InlineKeyboardButton(
-        'Да', callback_data='continue_unregister')
-    no_button_inline = types.InlineKeyboardButton(
-        'Нет', callback_data='cancel_unregister')
-    markup_inline.add(yes_button_inline, no_button_inline)
-    bot.send_message(message.chat.id, '*Вы уверены?*',
-                     reply_markup=markup_inline)
+def handle_unknown(message: types.Message):
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    write_me_button = types.InlineKeyboardButton(
+        'Напиши!', 'telegram.me/' + owner)
+    markup.add(write_me_button)
+    bot.send_message(
+        message.chat.id, 'Такой команды я не знаю. Возможно, мой Создатель её ещё не реализовал...\n\n'
+        + f'Если хочешь, чтобы Создатель реализовал эту команду, напиши ему: @{owner}',
+        reply_markup=markup
+    )
 
 
 @bot.message_handler(content_types=['text'])
-def redirect_text_to_commands(message):
+def text_handler(message: types.Message):
     if message.text == 'Список комманд':
-        help_command(message)
-    elif message.text == 'Регистрация':
-        register(message)
+        help_handler(message)
+    elif message.text == 'Платформа':
+        url_handler(message)
     else:
-        bot.send_message(
-            message.chat.id, f"Я не знаю такой команды.\n\nЕсли хочешь предложить функцию - напиши этому человеку: {owner_id}")
-
-
-@bot.callback_query_handler(func=lambda call: True)
-def callback_inline(call):
-    if call.message:
-        if call.data == 'continue_unregister':
-            new_msg = 'Ты нажал "Да", но функция ещё в разработке...'
-        elif call.data == 'cancel_unregister':
-            new_msg = 'Ты нажал "Нет", но функция ещё в разработке...'
-
-        # Удаляем кнопки
-        bot.edit_message_text(
-            chat_id=call.message.chat.id, message_id=call.message.message_id, text=new_msg, reply_markup=None)
+        handle_unknown(message)
 
 
 bot.infinity_polling()
