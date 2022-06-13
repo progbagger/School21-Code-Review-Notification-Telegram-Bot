@@ -1,6 +1,7 @@
 from telebot import types
 import telebot
 import config
+import reghandler
 import dbhandler
 import json
 
@@ -38,6 +39,12 @@ help_button = types.KeyboardButton('Список команд')
 link_button = types.KeyboardButton('Платформа')
 default_keyboard.add(help_button, link_button)
 
+# Cancel markup inline
+cancel_markup_inline = types.InlineKeyboardMarkup(row_width=1)
+cancel_button_inline = types.InlineKeyboardButton(
+    'Отмена', callback_data='cancel')
+cancel_markup_inline.add(cancel_button_inline)
+
 
 @bot.message_handler(commands=['start'])
 def start_handler(message: types.Message):
@@ -65,6 +72,14 @@ def url_handler(message: types.Message):
         message.chat.id, 'https://edu.21-school.ru/', reply_markup=markup)
 
 
+@bot.message_handler(commands=['register', 'unregister'])
+def registration_handler(message: types.Message):
+    if message.text == '/register':
+        reghandler.register_user(bot, message)
+    elif message.text == '/unregister':
+        reghandler.unregister_user(bot, message)
+
+
 def handle_unknown(message: types.Message):
     markup = types.InlineKeyboardMarkup(row_width=1)
     write_me_button = types.InlineKeyboardButton(
@@ -72,14 +87,14 @@ def handle_unknown(message: types.Message):
     markup.add(write_me_button)
     bot.send_message(
         message.chat.id, 'Такой команды я не знаю. Возможно, мой Создатель её ещё не реализовал...\n\n'
-        + f'Если хочешь, чтобы Создатель реализовал эту команду, напиши ему: @{owner}',
+        + f'Если хочешь, чтобы Создатель реализовал эту команду, **напиши** ему: @{owner}',
         reply_markup=markup
     )
 
 
 @bot.message_handler(content_types=['text'])
 def text_handler(message: types.Message):
-    if message.text == 'Список комманд':
+    if message.text == 'Список команд':
         help_handler(message)
     elif message.text == 'Платформа':
         url_handler(message)
