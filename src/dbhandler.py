@@ -60,10 +60,3 @@ def read_from_db(user_id: str):
                     break
         file.close()
     return user_data
-
-
-user1, user2 = 'astadasta', 'tandrasc'
-for i in range(100):
-    write_to_db('elenemar', 'Wow!', user1)
-    write_to_db('tandrasc', 'WOWOWOW', user2)
-remove_from_db(user1)

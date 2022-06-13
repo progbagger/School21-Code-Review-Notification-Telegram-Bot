@@ -3,7 +3,6 @@ import telebot
 import config
 import reghandler
 import dbhandler
-import json
 
 # Owner info
 owner = config.OWNER
@@ -103,6 +102,13 @@ def text_handler(message: types.Message):
         url_handler(message)
     else:
         handle_unknown(message)
+
+
+@bot.inline_handler(func=lambda call: True)
+def inline_buttons_handler(call: types.CallbackQuery):
+    if call.data == 'cancel':
+        bot.edit_message_text('Действие отменено',
+                              call.message.chat.id, reply_markup=None)
 
 
 bot.infinity_polling()
