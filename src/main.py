@@ -34,10 +34,13 @@ for command in commands[0]:
 help_message.rstrip('\n')
 
 # Default keyboard buttons
-default_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-help_button = types.KeyboardButton('Список команд')
-link_button = types.KeyboardButton('Платформа')
-default_keyboard.add(help_button, link_button)
+default_keyboard_markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+default_keyboard_list = [
+    types.KeyboardButton('Список команд'),
+    types.KeyboardButton('Платформа')
+]
+for button in default_keyboard_list:
+    default_keyboard_markup.add(button)
 
 # Cancel markup inline
 cancel_markup_inline = types.InlineKeyboardMarkup(row_width=1)
@@ -53,7 +56,7 @@ def start_handler(message: types.Message):
     bot.send_message(
         message.chat.id, f"Привет, **{message.from_user.first_name}**!\n"
         + "Вот список доступных команд:\n\n"
-        + help_message, reply_markup=default_keyboard
+        + help_message, reply_markup=default_keyboard_markup
     )
 
 
