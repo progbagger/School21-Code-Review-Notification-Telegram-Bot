@@ -41,12 +41,6 @@ default_keyboard_list = [
 for button in default_keyboard_list:
     default_keyboard_markup.add(button)
 
-# Cancel markup inline
-cancel_markup_inline = types.InlineKeyboardMarkup(row_width=1)
-cancel_button_inline = types.InlineKeyboardButton(
-    'Отмена', callback_data='cancel')
-cancel_markup_inline.add(cancel_button_inline)
-
 
 @bot.message_handler(commands=['start'])
 def start_handler(message: types.Message):
@@ -104,11 +98,11 @@ def text_handler(message: types.Message):
         handle_unknown(message)
 
 
-@bot.inline_handler(func=lambda call: True)
+@bot.callback_query_handler(func=lambda call: True)
 def inline_buttons_handler(call: types.CallbackQuery):
     if call.data == 'cancel':
-        bot.edit_message_text('Действие отменено',
-                              call.message.chat.id, reply_markup=None)
+        bot.edit_message_text(call.message.text + '\n\n__Действие отменено__',
+                              call.message.chat.id, call.message.id, reply_markup=None)
 
 
 bot.infinity_polling()
