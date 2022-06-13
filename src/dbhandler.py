@@ -29,17 +29,41 @@ def write_to_db(login: str, password: str, user_id: str):
     file.close()
 
 
+def remove_from_db(user_id: str):
+    if os.path.exists(db_path):
+        file = open(db_path, 'r')
+        file_contents = file.read()
+        file.close()
+        if file_contents != "":
+            file_contents = json.loads(file_contents)
+            for el in file_contents.copy():
+                if list(el.keys())[0] == user_id:
+                    file_contents.remove(el)
+            file = open(db_path, "w+")
+            if file_contents:
+                json.dump(file_contents, file, indent=2)
+            file.close()
+
+
 def read_from_db(user_id: str):
+    user_data = {}
     if os.path.exists(db_path):
         file = open(db_path, "r")
-        file_contents = json.load(file)
-        for el in file_contents:
-            if list(el.keys())[0] == user_id:
-                user_data = el[user_id]
-                user_data['password'] = decrypt(
-                    password=config.SECRET_WORD, enc_dict=user_data['password'])
-                print(user_data)
+        file_contents = file.read()
+        if file_contents != "":
+            file_contents = json.loads(file_contents)
+            for el in file_contents:
+                if list(el.keys())[0] == user_id:
+                    user_data = el[user_id]
+                    user_data['password'] = decrypt(
+                        password=config.SECRET_WORD, enc_dict=user_data['password'])
+                    break
+        file.close()
+    return user_data
 
 
-write_to_db('elenemar', 'bla-bla-bla', 'astadasta')
-read_from_db('astadasta')
+user1, user2 = 'astadasta', 'tandrasc'
+for i in range(100):
+    write_to_db('elenemar', 'Wow!', user1)
+    write_to_db('tandrasc', 'WOWOWOW', user2)
+remove_from_db(user1)
