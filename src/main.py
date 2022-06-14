@@ -15,13 +15,15 @@ commands = [
         'link',
         'help',
         'register',
-        'unregister'
+        'unregister',
+        'check'
     ],
     [
         'ссылка на платформу',
         'список команд',
-        'регистрация в системе отслеживания',
-        'отмена регистрации'
+        'регистрация в системе отслеживания. Данная команда принимает два аргумента: **логин** и **пароль** от платформы',
+        'отмена регистрации',
+        'проверить регистрацию в системе отслеживания'
     ]
 ]
 
@@ -68,12 +70,24 @@ def url_handler(message: types.Message):
         message.chat.id, 'https://edu.21-school.ru/', reply_markup=markup)
 
 
-@bot.message_handler(commands=['register', 'unregister'])
+@bot.message_handler(commands=['register'])
 def registration_handler(message: types.Message):
-    if message.text == '/register':
-        reghandler.register_user(bot, message)
-    elif message.text == '/unregister':
-        reghandler.unregister_user(bot, message)
+    reghandler.register_user(bot, message)
+
+
+@bot.message_handler(commands=['unregister'])
+def unreg_handler(message: types.Message):
+    reghandler.unregister_user(bot, message)
+
+
+@bot.message_handler(commands=['check'])
+def check_registration_handler(message: types.Message):
+    if dbhandler.read_from_db(message.chat.username):
+        bot.send_message(
+            message.chat.id, f'Твой id (@{message.chat.username}) уже зарегистрирован в системе отслеживания.')
+    else:
+        bot.send_message(
+            message.chat.id, f'Твой id (@{message.chat.username}) ещё не зарегистрирован в системе отслеживания.')
 
 
 def handle_unknown(message: types.Message):
