@@ -75,10 +75,10 @@ def url_handler(message: types.Message):
 @bot.message_handler(commands=['register'])
 def registration_handler(message: types.Message):
     if not dbhandler.read_from_db(str(message.chat.id)):
-        if len(user_info) == 0:
-            user_info.append('T')
-            bot.send_message(message.chat.id, 'Введи свой **логин** на платформе',
-                             reply_markup=reghandler.cancel_markup_inline)
+        user_info.clear()
+        user_info.append('T')
+        bot.send_message(message.chat.id, 'Введи свой **логин** на платформе',
+                         reply_markup=reghandler.cancel_markup_inline)
     else:
         bot.send_message(message.chat.id, 'Похоже, ты уже зарегистрирован в системе отслеживания оповещений.\nПопробуй выполнить команду /unregister и попробовать ещё раз.\n\n'
                          + f'Если это не помогло, обратись к моему Создателю: @{config.OWNER}')
@@ -86,7 +86,14 @@ def registration_handler(message: types.Message):
 
 @bot.message_handler(commands=['unregister'])
 def unreg_handler(message: types.Message):
-    reghandler.unregister_user(bot, message)
+    if dbhandler.read_from_db(str(message.chat.id)):
+        dbhandler.remove_from_db(str(message.chat.id))
+        bot.send_message(
+            message.chat.id, 'Твой никнейм успешно удалён из истемы отслеживания.')
+        user_info.clear()
+    else:
+        bot.send_message(message.chat.id, 'Похоже, ты ещё не зарегистрирован в системе отслеживания оповещений.\n\n'
+                         + f'Если это не помогло, обратись к моему Создателю: @{config.OWNER}')
 
 
 @bot.message_handler(commands=['check'])
@@ -136,9 +143,10 @@ def text_handler(message: types.Message):
             else:
                 user_info.clear()
                 bot.send_message(
-                    message.chat.id, 'Что-то пошло не так. Попробуй ещё раз')
+                    message.chat.id, 'Что-то пошло не так. Попробуй ещё раз', reply_markup=None)
         else:
             handle_unknown(message)
+            user_info.clear()
 
 
 @bot.callback_query_handler(func=lambda call: True)
