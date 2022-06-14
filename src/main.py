@@ -27,6 +27,8 @@ commands = [
     ]
 ]
 
+user_info = []
+
 # Help message
 help_message = ''
 for command in commands[0]:
@@ -72,7 +74,14 @@ def url_handler(message: types.Message):
 
 @bot.message_handler(commands=['register'])
 def registration_handler(message: types.Message):
-    reghandler.register_user(bot, message)
+    if not dbhandler.read_from_db(str(message.chat.id)):
+        if len(user_info) == 0:
+            user_info.append('T')
+            bot.send_message(message.chat.id, 'Введи свой **логин** на платформе',
+                             reply_markup=reghandler.cancel_markup_inline)
+    else:
+        bot.send_message(message.chat.id, 'Похоже, ты уже зарегистрирован в системе отслеживания оповещений.\nПопробуй выполнить команду /unregister и попробовать ещё раз.\n\n'
+                         + f'Если это не помогло, обратись к моему Создателю: @{config.OWNER}')
 
 
 @bot.message_handler(commands=['unregister'])
@@ -82,12 +91,12 @@ def unreg_handler(message: types.Message):
 
 @bot.message_handler(commands=['check'])
 def check_registration_handler(message: types.Message):
-    if dbhandler.read_from_db(message.chat.username):
+    if dbhandler.read_from_db(str(message.chat.id)):
         bot.send_message(
-            message.chat.id, f'Твой id (@{message.chat.username}) уже зарегистрирован в системе отслеживания.')
+            message.chat.id, 'Твой id уже зарегистрирован в системе отслеживания.')
     else:
         bot.send_message(
-            message.chat.id, f'Твой id (@{message.chat.username}) ещё не зарегистрирован в системе отслеживания.')
+            message.chat.id, 'Твой id ещё не зарегистрирован в системе отслеживания.')
 
 
 def handle_unknown(message: types.Message):
@@ -108,8 +117,28 @@ def text_handler(message: types.Message):
         help_handler(message)
     elif message.text == 'Платформа':
         url_handler(message)
+    elif message.text == 'Регистрация':
+        registration_handler(message)
     else:
-        handle_unknown(message)
+        if len(user_info) != 0:
+            if user_info[0] == 'T' and len(user_info) == 1:
+                bot.send_message(message.chat.id, 'Теперь введи **пароль** от платформы\n\n__Не бойся, я шифрую данные, так что не смогу их применить__',
+                                 reply_markup=reghandler.cancel_markup_inline)
+                user_info.append(message.text)
+            elif user_info[0] == 'T' and len(user_info) == 2:
+                bot.send_message(
+                    message.chat.id, f'Ты зарегистрировался под ником **{user_info[1]}**\n\nДля отмены регистрации выполни команду /unregister'
+                    + '\n**ОБЯЗАТЕЛЬНО** удали сообщение с паролем в целях конфиденциальности!')
+                user_info.append(message.text)
+                dbhandler.write_to_db(
+                    user_info[1], user_info[2], str(message.chat.id))
+                user_info.clear()
+            else:
+                user_info.clear()
+                bot.send_message(
+                    message.chat.id, 'Что-то пошло не так. Попробуй ещё раз')
+        else:
+            handle_unknown(message)
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -117,6 +146,7 @@ def inline_buttons_handler(call: types.CallbackQuery):
     if call.data == 'cancel':
         bot.edit_message_text(call.message.text + '\n\n__Действие отменено__',
                               call.message.chat.id, call.message.id, reply_markup=None)
+        user_info.clear()
 
 
 bot.infinity_polling()
