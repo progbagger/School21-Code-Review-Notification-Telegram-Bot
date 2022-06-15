@@ -1,3 +1,4 @@
+from email import message
 from telebot import types
 import telebot
 import config
@@ -27,7 +28,9 @@ commands = [
     ]
 ]
 
+# Dictionaries to correctly handle user registration
 user_info = {}
+prev_messages = {}
 
 
 # Help message
@@ -76,7 +79,7 @@ def url_handler(message: types.Message):
 @bot.message_handler(commands=['register'])
 def registration_handler(message: types.Message):
     if not dbhandler.read_from_db(str(message.chat.id)):
-        user_info[str(message.chat.id)] = list
+        user_info[str(message.chat.id)] = ['Junk']
         bot.send_message(message.chat.id, 'Введи свой **логин** на платформе',
                          reply_markup=reghandler.cancel_markup_inline)
     else:
@@ -92,7 +95,7 @@ def unreg_handler(message: types.Message):
             message.chat.id, 'Твой никнейм успешно удалён из истемы отслеживания.')
     else:
         bot.send_message(message.chat.id, 'Похоже, ты ещё не зарегистрирован в системе отслеживания оповещений.\n\n'
-                         + f'Если это не помогло, обратись к моему Создателю: @{config.OWNER}')
+                         + f'Сперва зарегистрируйся, введя команду /register')
 
 
 @bot.message_handler(commands=['check'])
@@ -125,26 +128,25 @@ def text_handler(message: types.Message):
         url_handler(message)
     elif message.text == 'Регистрация':
         registration_handler(message)
-    else:
-        if user_info[str(message.chat.id)] == []:
-            if len(user_info[str(message.chat.id)]) == 0:
-                user_info[str(message.chat.id)].append(message.text)
-                bot.send_message(message.chat.id, 'Теперь введи **пароль** от платформы\n\n__Не бойся, я шифрую данные, так что не смогу их применить__',
-                                 reply_markup=reghandler.cancel_markup_inline)
-            elif len(user_info[str(message.chat.id)]) == 1:
-                user_info[str(message.chat.id)].append(message.text)
-                dbhandler.write_to_db(
-                    user_info[message.chat.id][0], user_info[message.chat.id][1], str(message.chat.id))
-                user_info[message.chat.id] = list
-                bot.send_message(
-                    message.chat.id, f'Ты зарегистрировался под ником **{user_info[1]}**\n\nДля отмены регистрации выполни команду /unregister'
-                    + '\n**ОБЯЗАТЕЛЬНО** удали сообщение с паролем в целях конфиденциальности!')
-            else:
-                user_info[message.chat.id] = list
-                bot.send_message(
-                    message.chat.id, 'Что-то пошло не так. Попробуй ещё раз', reply_markup=None)
+    elif user_info.get(str(message.chat.id), None) is not None:
+        if len(user_info.get(str(message.chat.id))) == 1:
+            user_info.get(str(message.chat.id)).append(message.text)
+            bot.send_message(message.chat.id, 'Теперь введи **пароль** от платформы\n\n__Не бойся, я шифрую данные, так что не смогу их применить__',
+                             reply_markup=reghandler.cancel_markup_inline)
+        elif len(user_info.get(str(message.chat.id))) == 2:
+            user_info.get(str(message.chat.id)).append(message.text)
+            dbhandler.write_to_db(
+                user_info.get(str(message.chat.id))[1], user_info.get(str(message.chat.id))[1], (str(message.chat.id)))
+            bot.send_message(
+                message.chat.id, f'Ты зарегистрировался под ником **{user_info.get(str(message.chat.id))[1]}**\n\nДля отмены регистрации выполни команду /unregister'
+                + '\n**ОБЯЗАТЕЛЬНО** удали сообщение с паролем в целях конфиденциальности!')
+            user_info.pop(str(message.chat.id), [])
         else:
-            handle_unknown(message)
+            user_info.pop(str(message.chat.id), [])
+            bot.send_message(
+                message.chat.id, 'Что-то пошло не так. Попробуй ещё раз', reply_markup=None)
+    else:
+        handle_unknown(message)
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -152,7 +154,7 @@ def inline_buttons_handler(call: types.CallbackQuery):
     if call.data == 'cancel':
         bot.edit_message_text(call.message.text + '\n\n__Действие отменено__',
                               call.message.chat.id, call.message.id, reply_markup=None)
-        user_info.clear()
+        user_info.pop(call.message.chat.id)
 
 
 bot.infinity_polling()
