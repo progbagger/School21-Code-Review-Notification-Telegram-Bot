@@ -27,7 +27,8 @@ commands = [
     ]
 ]
 
-user_info = []
+user_info = {}
+
 
 # Help message
 help_message = ''
@@ -75,8 +76,7 @@ def url_handler(message: types.Message):
 @bot.message_handler(commands=['register'])
 def registration_handler(message: types.Message):
     if not dbhandler.read_from_db(str(message.chat.id)):
-        user_info.clear()
-        user_info.append('T')
+        user_info[str(message.chat.id)] = list
         bot.send_message(message.chat.id, 'Введи свой **логин** на платформе',
                          reply_markup=reghandler.cancel_markup_inline)
     else:
@@ -90,7 +90,6 @@ def unreg_handler(message: types.Message):
         dbhandler.remove_from_db(str(message.chat.id))
         bot.send_message(
             message.chat.id, 'Твой никнейм успешно удалён из истемы отслеживания.')
-        user_info.clear()
     else:
         bot.send_message(message.chat.id, 'Похоже, ты ещё не зарегистрирован в системе отслеживания оповещений.\n\n'
                          + f'Если это не помогло, обратись к моему Создателю: @{config.OWNER}')
@@ -127,26 +126,25 @@ def text_handler(message: types.Message):
     elif message.text == 'Регистрация':
         registration_handler(message)
     else:
-        if len(user_info) != 0:
-            if user_info[0] == 'T' and len(user_info) == 1:
+        if user_info[str(message.chat.id)] == []:
+            if len(user_info[str(message.chat.id)]) == 0:
+                user_info[str(message.chat.id)].append(message.text)
                 bot.send_message(message.chat.id, 'Теперь введи **пароль** от платформы\n\n__Не бойся, я шифрую данные, так что не смогу их применить__',
                                  reply_markup=reghandler.cancel_markup_inline)
-                user_info.append(message.text)
-            elif user_info[0] == 'T' and len(user_info) == 2:
+            elif len(user_info[str(message.chat.id)]) == 1:
+                user_info[str(message.chat.id)].append(message.text)
+                dbhandler.write_to_db(
+                    user_info[message.chat.id][0], user_info[message.chat.id][1], str(message.chat.id))
+                user_info[message.chat.id] = list
                 bot.send_message(
                     message.chat.id, f'Ты зарегистрировался под ником **{user_info[1]}**\n\nДля отмены регистрации выполни команду /unregister'
                     + '\n**ОБЯЗАТЕЛЬНО** удали сообщение с паролем в целях конфиденциальности!')
-                user_info.append(message.text)
-                dbhandler.write_to_db(
-                    user_info[1], user_info[2], str(message.chat.id))
-                user_info.clear()
             else:
-                user_info.clear()
+                user_info[message.chat.id] = list
                 bot.send_message(
                     message.chat.id, 'Что-то пошло не так. Попробуй ещё раз', reply_markup=None)
         else:
             handle_unknown(message)
-            user_info.clear()
 
 
 @bot.callback_query_handler(func=lambda call: True)
