@@ -1,9 +1,8 @@
-from email import message
 from telebot import types
 import telebot
 import config
-import reghandler
-import dbhandler
+import reghandler as reg
+import dbhandler as db
 
 # Owner info
 owner = config.OWNER
@@ -78,10 +77,10 @@ def url_handler(message: types.Message):
 
 @bot.message_handler(commands=['register'])
 def registration_handler(message: types.Message):
-    if not dbhandler.read_from_db(str(message.chat.id)):
+    if not db.read_from_db(str(message.chat.id)):
         user_info[str(message.chat.id)] = ['Junk']
         bot.send_message(message.chat.id, 'Введи свой **логин** на платформе',
-                         reply_markup=reghandler.cancel_markup_inline)
+                         reply_markup=reg.cancel_markup_inline)
     else:
         bot.send_message(message.chat.id, 'Похоже, ты уже зарегистрирован в системе отслеживания оповещений.\nПопробуй выполнить команду /unregister и попробовать ещё раз.\n\n'
                          + f'Если это не помогло, обратись к моему Создателю: @{config.OWNER}')
@@ -89,8 +88,8 @@ def registration_handler(message: types.Message):
 
 @bot.message_handler(commands=['unregister'])
 def unreg_handler(message: types.Message):
-    if dbhandler.read_from_db(str(message.chat.id)):
-        dbhandler.remove_from_db(str(message.chat.id))
+    if db.read_from_db(str(message.chat.id)):
+        db.remove_from_db(str(message.chat.id))
         bot.send_message(
             message.chat.id, 'Твой никнейм успешно удалён из истемы отслеживания.')
     else:
@@ -100,7 +99,7 @@ def unreg_handler(message: types.Message):
 
 @bot.message_handler(commands=['check'])
 def check_registration_handler(message: types.Message):
-    if dbhandler.read_from_db(str(message.chat.id)):
+    if db.read_from_db(str(message.chat.id)):
         bot.send_message(
             message.chat.id, 'Твой id уже зарегистрирован в системе отслеживания.')
     else:
@@ -132,10 +131,10 @@ def text_handler(message: types.Message):
         if len(user_info.get(str(message.chat.id))) == 1:
             user_info.get(str(message.chat.id)).append(message.text)
             bot.send_message(message.chat.id, 'Теперь введи **пароль** от платформы\n\n__Не бойся, я шифрую данные, так что не смогу их применить__',
-                             reply_markup=reghandler.cancel_markup_inline)
+                             reply_markup=reg.cancel_markup_inline)
         elif len(user_info.get(str(message.chat.id))) == 2:
             user_info.get(str(message.chat.id)).append(message.text)
-            dbhandler.write_to_db(
+            db.write_to_db(
                 user_info.get(str(message.chat.id))[1], user_info.get(str(message.chat.id))[1], (str(message.chat.id)))
             bot.send_message(
                 message.chat.id, f'Ты зарегистрировался под ником **{user_info.get(str(message.chat.id))[1]}**\n\nДля отмены регистрации выполни команду /unregister'
