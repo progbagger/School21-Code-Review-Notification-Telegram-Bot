@@ -128,15 +128,39 @@ def handle_unknown(message: types.Message):
     )
 
 
+def check_help_text(message: types.Message):
+    if message.text == "Список команд":
+        return True
+
+
+@bot.message_handler(content_types=["text"], func=check_help_text)
+def reg_text_handler(message: types.Message):
+    help_handler(message)
+
+
+def check_platform_text(message: types.Message):
+    if message.text == "Платформа":
+        return True
+
+
+@bot.message_handler(content_types=["text"], func=check_platform_text)
+def platform_text_handler(message: types.Message):
+    url_handler(message)
+
+
+def check_reg_text(message: types.Message):
+    if message.text == "Регистрация":
+        return True
+
+
+@bot.message_handler(content_types=["text"], func=check_reg_text)
+def reg_text_handler(message: types.Message):
+    registration_handler(message)
+
+
 @bot.message_handler(content_types=["text"])
 def text_handler(message: types.Message):
-    if message.text == "Список команд":
-        help_handler(message)
-    elif message.text == "Платформа":
-        url_handler(message)
-    elif message.text == "Регистрация":
-        registration_handler(message)
-    elif user_info.get(str(message.chat.id), None) is not None:
+    if user_info.get(str(message.chat.id), None) is not None:
         if len(user_info.get(str(message.chat.id))) == 1:
             user_info.get(str(message.chat.id)).append(message.text)
             bot.send_message(
