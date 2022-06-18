@@ -1,1 +1,2 @@
-start: python3 src/main.py
+web: python src/main.py
+worker: python src/main.py 
