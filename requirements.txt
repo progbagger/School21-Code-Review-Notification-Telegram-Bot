@@ -21,7 +21,6 @@ cryptography==3.4.8
 cssselect==1.1.0
 dbus-python==1.2.18
 distro==1.7.0
-distro-info===1.1build1
 fake-useragent==0.1.11
 gcovr==5.0
 h11==0.13.0
