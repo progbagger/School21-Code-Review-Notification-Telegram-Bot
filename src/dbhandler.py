@@ -3,8 +3,8 @@ import config
 import json
 from cryptocode import encrypt, decrypt
 
-db_folder = os.path.join("../", "data")
-db_path = os.path.join("../", "data", "logins.json")
+db_folder = os.path.join("data")
+db_path = os.path.join("data", "logins.json")
 
 
 def write_to_db(login: str, password: str, user_id: str):
