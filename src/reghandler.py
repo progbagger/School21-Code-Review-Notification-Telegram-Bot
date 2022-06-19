@@ -1,4 +1,3 @@
-from uuid import NAMESPACE_DNS
 import telebot
 import dbhandler
 import config

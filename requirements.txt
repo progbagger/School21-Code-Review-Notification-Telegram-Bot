@@ -1,0 +1,5 @@
+pyTelegramBotAPI==4.5.1
+cryptocode==0.1
+requests==2.25.1
+bs4==0.0.1
+selenium==4.2.0
