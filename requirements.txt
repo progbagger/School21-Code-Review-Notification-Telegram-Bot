@@ -5,3 +5,5 @@ bs4==0.0.1
 selenium==4.2.0
 asyncio==3.4.3
 aiohttp==3.8.1
+chromedriver==2.24.1
+lxml==4.8.0
