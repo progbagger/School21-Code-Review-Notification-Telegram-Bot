@@ -28,37 +28,49 @@ def auth_into_platform(
         elem = driver.find_element(by=By.NAME, value="password")
         elem.send_keys(password)
         elem.send_keys(Keys.ENTER)
+        sleep(2)
         if "auth.sberclass.ru" in driver.current_url:
             return None
-        sleep(5)
         driver.get(calendar)
         sleep(5)
         source_code = driver.page_source
         driver.close()
+        with open("page.html", "w") as page:
+            page.write(source_code)
         return source_code
 
 
 # Function to get list of planned participant peer reviews
 def get_ppr_list(source_code: str):
     soup = bs(source_code, "lxml")
-    button_orient = soup.find("button")
-    for _ in range(2):
-        button_orient = button_orient.find_next("button")
-    print(button_orient)
-    current_date = button_orient.find_previous("div")
-    print(current_date)
+    current_date = (
+        soup.find("div")
+        .find_next("div")
+        .find_next_sibling("div")
+        .find_next_sibling("div")
+        .find_next_sibling("div")
+        .find_next_sibling("div")
+        .find_next("div")
+        .find_next("div")
+        .find_next("div")
+        .find_next_sibling("div")
+    )
     count = 0
     while len(current_date.get_attribute_list("class")) != 2:
-        current_date = current_date.find_previous("div")
+        current_date = current_date.find_next_sibling("div")
         count += 1
-    calendars = soup.find(
-        "div",
+    current_date_column = (
+        soup.find("div")
+        .find_next("div")
+        .find_next_sibling("div")
+        .find_next_sibling("div")
+        .find_next_sibling("div")
+        .find_next_sibling("div")
+        .find_next("div")
+        .find_next("div")
+        .find_next_sibling("div")
+        .find_all("div")[count]
     )
-    count = 7 - 1 - count
-    current_date_column = calendars.find_next("div")
-    for _ in range(count):
-        current_date_column = current_date_column.find_next("div")
-    print(current_date_column)
     if len(current_date_column) == 0:
         return None
     else:
