@@ -1,6 +1,5 @@
 from telebot import types
-from telebot.async_telebot import AsyncTeleBot
-from asyncio import run
+from telebot import TeleBot
 import config
 import reghandler as reg
 import dbhandler as db
@@ -10,7 +9,7 @@ import datetime
 # Owner info
 owner = config.OWNER
 
-bot = AsyncTeleBot(config.TOKEN, parse_mode=config.PARSE_MODE)
+bot = TeleBot(config.TOKEN, parse_mode=config.PARSE_MODE)
 
 # Commands list and their descriptions
 commands = [
@@ -49,11 +48,11 @@ for button in default_keyboard_list:
 
 
 @bot.message_handler(commands=["start"])
-async def start_handler(message: types.Message):
+def start_handler(message: types.Message):
     hello_sticker = open("assets/Hello.webp", "rb")
-    await bot.send_sticker(message.chat.id, hello_sticker)
+    bot.send_sticker(message.chat.id, hello_sticker)
     hello_sticker.close()
-    await bot.send_message(
+    bot.send_message(
         message.chat.id,
         f"Привет, *{message.from_user.first_name}*!\n"
         + "Вот список доступных команд:\n\n"
@@ -63,33 +62,31 @@ async def start_handler(message: types.Message):
 
 
 @bot.message_handler(commands=["help"])
-async def help_handler(message: types.Message):
-    await bot.send_message(message.chat.id, help_message)
+def help_handler(message: types.Message):
+    bot.send_message(message.chat.id, help_message)
 
 
 @bot.message_handler(commands=["link"])
-async def url_handler(message: types.Message):
+def url_handler(message: types.Message):
     markup = types.InlineKeyboardMarkup(row_width=1)
     write_me_button = types.InlineKeyboardButton(
         "Платформа школы 21", "https://edu.21-school.ru/"
     )
     markup.add(write_me_button)
-    await bot.send_message(
-        message.chat.id, "https://edu.21-school.ru/", reply_markup=markup
-    )
+    bot.send_message(message.chat.id, "https://edu.21-school.ru/", reply_markup=markup)
 
 
 @bot.message_handler(commands=["register"])
-async def registration_handler(message: types.Message):
+def registration_handler(message: types.Message):
     if not db.read_from_db(str(message.chat.id)):
         user_info[str(message.chat.id)] = ["Junk"]
-        await bot.send_message(
+        bot.send_message(
             message.chat.id,
             "Введи свой *логин* на платформе",
             reply_markup=reg.cancel_markup_inline,
         )
     else:
-        await bot.send_message(
+        bot.send_message(
             message.chat.id,
             "Похоже, ты уже зарегистрирован в системе отслеживания оповещений.\nПопробуй выполнить команду /unregister и попробовать ещё раз.\n\n"
             + f"Если это не помогло, обратись к моему Создателю: @{config.OWNER}",
@@ -97,14 +94,14 @@ async def registration_handler(message: types.Message):
 
 
 @bot.message_handler(commands=["unregister"])
-async def unreg_handler(message: types.Message):
+def unreg_handler(message: types.Message):
     if db.read_from_db(str(message.chat.id)):
         db.remove_from_db(str(message.chat.id))
-        await bot.send_message(
+        bot.send_message(
             message.chat.id, "Твой никнейм успешно удалён из истемы отслеживания."
         )
     else:
-        await bot.send_message(
+        bot.send_message(
             message.chat.id,
             "Похоже, ты ещё не зарегистрирован в системе отслеживания оповещений.\n\n"
             + "Сперва зарегистрируйся, введя команду /register",
@@ -112,24 +109,24 @@ async def unreg_handler(message: types.Message):
 
 
 @bot.message_handler(commands=["check"])
-async def check_registration_handler(message: types.Message):
+def check_registration_handler(message: types.Message):
     if db.read_from_db(str(message.chat.id)):
-        await bot.send_message(
+        bot.send_message(
             message.chat.id, "Твой id уже зарегистрирован в системе отслеживания."
         )
     else:
-        await bot.send_message(
+        bot.send_message(
             message.chat.id, "Твой id ещё не зарегистрирован в системе отслеживания."
         )
 
 
 @bot.message_handler(commands=["agenda"])
-async def send_agenda(message: types.Message):
+def send_agenda(message: types.Message):
     print(f'Checking registration for user id "{message.chat.id}"...')
     user_info = db.read_from_db(str(message.chat.id))
     if not user_info:
         print(f'User with id "{message.chat.id}" is not registered!')
-        await bot.send_message(
+        bot.send_message(
             message.chat.id,
             "Для получения сводки необходимо сперва зарегистрироваться. Ты можешь сделать это с помощью команды /register.",
         )
@@ -137,7 +134,7 @@ async def send_agenda(message: types.Message):
         print(f"Found login \"{user_info['login']}\" for id \"{message.chat.id}\"!")
         print(f"Collecting info for user \"{user_info['login']}\"...")
         print("- Authorization...")
-        messg = await bot.send_message(
+        messg = bot.send_message(
             message.chat.id, "*Собираю информацию...*\n\n" + "_[1/2] - авторизация_"
         )
         d = datetime.datetime.today()
@@ -146,7 +143,7 @@ async def send_agenda(message: types.Message):
         if events is None:
             print("- Authorization failed!")
             print(f"Failed to authorize user \"{user_info['login']}\"!")
-            await bot.edit_message_text(
+            bot.edit_message_text(
                 "Возникли проблемы с авторизацией. Попробуй позже.\n\n"
                 + f"_Если не получится позже, напиши Создателю: @{config.OWNER}_",
                 message.chat.id,
@@ -155,7 +152,7 @@ async def send_agenda(message: types.Message):
         else:
             print("- Authorization success!")
             print(f"Collecting info for username \"{user_info['login']}\"...")
-            await bot.edit_message_text(
+            bot.edit_message_text(
                 "*Собираю информацию...*\n\n" + "_[2/2] - получение данных_",
                 message.chat.id,
                 messg.id,
@@ -170,14 +167,14 @@ async def send_agenda(message: types.Message):
                     msg += f"• *{event['start_time']}* - *{event['end_time']}* — _{event['event']}_\n"
                 msg.strip("\n")
             print(f"Ended collecting info for username \"{user_info['login']}\".")
-            await bot.edit_message_text(msg, messg.chat.id, messg.id)
+            bot.edit_message_text(msg, messg.chat.id, messg.id)
 
 
-async def handle_unknown(message: types.Message):
+def handle_unknown(message: types.Message):
     markup = types.InlineKeyboardMarkup(row_width=1)
     write_me_button = types.InlineKeyboardButton("Напиши!", "telegram.me/" + owner)
     markup.add(write_me_button)
-    await bot.send_message(
+    bot.send_message(
         message.chat.id,
         "Такой команды я не знаю. Возможно, мой Создатель её ещё не реализовал...\n\n"
         + f"Если хочешь, чтобы Создатель реализовал эту команду, *напиши* ему: @{owner}",
@@ -191,8 +188,8 @@ def check_help_text(message: types.Message):
 
 
 @bot.message_handler(content_types=["text"], func=check_help_text)
-async def reg_text_handler(message: types.Message):
-    await help_handler(message)
+def reg_text_handler(message: types.Message):
+    help_handler(message)
 
 
 def check_platform_text(message: types.Message):
@@ -201,8 +198,8 @@ def check_platform_text(message: types.Message):
 
 
 @bot.message_handler(content_types=["text"], func=check_platform_text)
-async def platform_text_handler(message: types.Message):
-    await url_handler(message)
+def platform_text_handler(message: types.Message):
+    url_handler(message)
 
 
 def check_reg_text(message: types.Message):
@@ -211,8 +208,8 @@ def check_reg_text(message: types.Message):
 
 
 @bot.message_handler(content_types=["text"], func=check_reg_text)
-async def reg_text_handler(message: types.Message):
-    await registration_handler(message)
+def reg_text_handler(message: types.Message):
+    registration_handler(message)
 
 
 def check_agenda_text(message: types.Message):
@@ -221,22 +218,22 @@ def check_agenda_text(message: types.Message):
 
 
 @bot.message_handler(content_types=["text"], func=check_agenda_text)
-async def agenda_text_handler(message: types.Message):
-    await send_agenda(message)
+def agenda_text_handler(message: types.Message):
+    send_agenda(message)
 
 
 @bot.message_handler(content_types=["text"])
-async def text_handler(message: types.Message):
+def text_handler(message: types.Message):
     if user_info.get(str(message.chat.id), None) is not None:
         if len(user_info.get(str(message.chat.id))) == 1:
             user_info.get(str(message.chat.id)).append(message.text.strip().lower())
-            await bot.send_message(
+            bot.send_message(
                 message.chat.id,
                 "Теперь введи *пароль* от платформы\n\n_Не бойся, я шифрую данные, так что не смогу их применить_",
                 reply_markup=reg.cancel_markup_inline,
             )
         elif len(user_info.get(str(message.chat.id))) == 2:
-            tmp_message = await bot.send_message(
+            tmp_message = bot.send_message(
                 message.chat.id, "Проверяю корректность данных..."
             )
             user_info.get(str(message.chat.id)).append(message.text)
@@ -249,7 +246,7 @@ async def text_handler(message: types.Message):
                     user_info.get(str(message.chat.id))[2],
                     (str(message.chat.id)),
                 )
-                await bot.edit_message_text(
+                bot.edit_message_text(
                     f"Ты зарегистрировался под ником *{user_info.get(str(message.chat.id))[1]}*\n\nДля отмены регистрации выполни команду /unregister"
                     + "\n*ОБЯЗАТЕЛЬНО* удали сообщение с паролем в целях конфиденциальности!",
                     message.chat.id,
@@ -257,26 +254,26 @@ async def text_handler(message: types.Message):
                 )
                 user_info.pop(str(message.chat.id), [])
             else:
-                await bot.edit_message_text(
+                bot.edit_message_text(
                     "Мне не удалось авторизоваться на платформе с этими данными. Попробуй ещё раз.",
                     message.chat.id,
                     tmp_message.id,
                 )
         else:
             user_info.pop(str(message.chat.id), [])
-            await bot.send_message(
+            bot.send_message(
                 message.chat.id,
                 "Что-то пошло не так. Попробуй ещё раз",
                 reply_markup=None,
             )
     else:
-        await handle_unknown(message)
+        handle_unknown(message)
 
 
 @bot.callback_query_handler(func=lambda call: True)
-async def inline_buttons_handler(call: types.CallbackQuery):
+def inline_buttons_handler(call: types.CallbackQuery):
     if call.data == "cancel":
-        await bot.edit_message_text(
+        bot.edit_message_text(
             call.message.text + "\n\n_Действие отменено_",
             call.message.chat.id,
             call.message.id,
@@ -285,4 +282,9 @@ async def inline_buttons_handler(call: types.CallbackQuery):
         user_info.pop(call.message.chat.id)
 
 
-run(bot.infinity_polling())
+def main():
+    bot.infinity_polling()
+
+
+if __name__ == "__main__":
+    main()
