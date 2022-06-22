@@ -33,6 +33,7 @@ def auth_into_platform(
         print(f'- Trying to authorizate user "{username}"...')
         sleep(10)
         if "auth.sberclass.ru" in driver.current_url:
+            driver.close()
             print("- Authorization failed!")
             return None
         print("- Authorization success!")
@@ -109,5 +110,5 @@ def get_today_events(username: str, password: str):
     source_code = auth_into_platform(username=username, password=password)
     if source_code is None:
         return None
-    else:
-        return get_ppr_list(source_code)
+    events = get_ppr_list(source_code)
+    return events
