@@ -37,20 +37,20 @@ def auth_into_platform(
             print("- Authorization failed!")
             return None
         print("- Authorization success!")
-        driver.get(calendar)
-        sleep(10)
-        # Need to somehow check if page loaded fully and successfully
-        print(f'Getting calendar page data for user "{username}"...')
-        source_code = driver.page_source
-        driver.close()
-        return source_code
+        return driver
 
 
 # Function to get list of planned participant peer reviews
-def get_ppr_list(source_code: str):
-    soup = bs(source_code, "lxml")
+def get_ppr_list(driver: webdriver.Chrome):
+    driver.get(calendar)
+    sleep(10)
+    # Need to somehow check if page loaded fully and successfully
+    print(f"Getting calendar page data...")
+    source_code = driver.page_source
+    driver.close()
+    content = bs(source_code, "lxml")
     current_date = (
-        soup.find("div")
+        content.find("div")
         .find_next("div")
         .find_next_sibling("div")
         .find_next_sibling("div")
@@ -66,7 +66,7 @@ def get_ppr_list(source_code: str):
         current_date = current_date.find_next_sibling("div")
         count += 1
     current_date_column = (
-        soup.find("div")
+        content.find("div")
         .find_next("div")
         .find_next_sibling("div")
         .find_next_sibling("div")
@@ -107,8 +107,8 @@ def get_ppr_list(source_code: str):
 
 
 def get_today_events(username: str, password: str):
-    source_code = auth_into_platform(username=username, password=password)
-    if source_code is None:
+    driver = auth_into_platform(username=username, password=password)
+    if driver is None:
         return None
-    events = get_ppr_list(source_code)
+    events = get_ppr_list(driver)
     return events
