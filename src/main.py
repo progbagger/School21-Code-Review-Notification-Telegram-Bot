@@ -141,7 +141,9 @@ async def send_agenda(message: types.Message):
         if events is None:
             await bot.edit_message_text(
                 "Возникли проблемы с авторизацией. Попробуй позже.\n\n"
-                + f"_Если не получится позже, напиши *Создателю*: @{config.OWNER}_"
+                + f"_Если не получится позже, напиши *Создателю*: @{config.OWNER}_",
+                message.chat.id,
+                messg.id,
             )
         else:
             await bot.edit_message_text(
