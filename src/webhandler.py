@@ -3,6 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from time import sleep
 from bs4 import BeautifulSoup as bs
+from config import CHROME_LOCATION
 
 # Variables for searching for notifications
 link = "https://edu.21-school.ru"
@@ -10,6 +11,7 @@ calendar = link + "/calendar"
 
 # Options for webdriver
 op = webdriver.ChromeOptions()
+op.binary_location = CHROME_LOCATION
 op.add_argument("--headless")
 
 
@@ -20,7 +22,7 @@ def auth_into_platform(
     password: str = "RepusSotnad1702",
 ):
     if not driver:
-        driver = webdriver.Chrome(options=op)
+        driver = webdriver.Chrome(executable_path="chromedriver", options=op)
     if driver.current_url != link:
         driver.get(link)
         elem = driver.find_element(by=By.NAME, value="username")
