@@ -29,8 +29,6 @@ commands = [
 user_info = {}
 prev_messages = {}
 
-hello_sticker = open("assets/Hello.webp", "rb")
-
 # Help message
 help_message = ""
 for command in commands[0]:
@@ -52,7 +50,9 @@ for button in default_keyboard_list:
 
 @bot.message_handler(commands=["start"])
 async def start_handler(message: types.Message):
+    hello_sticker = open("assets/Hello.webp", "rb")
     await bot.send_sticker(message.chat.id, hello_sticker)
+    hello_sticker.close()
     await bot.send_message(
         message.chat.id,
         f"Привет, *{message.from_user.first_name}*!\n"
