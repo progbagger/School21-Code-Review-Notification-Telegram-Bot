@@ -43,9 +43,9 @@ def auth_into_platform(
 # Function to get list of planned participant peer reviews
 def get_ppr_list(driver: webdriver.Chrome):
     driver.get(calendar)
-    sleep(10)
     # Need to somehow check if page loaded fully and successfully
     print(f"Getting calendar page data...")
+    sleep(10)
     source_code = driver.page_source
     driver.close()
     content = bs(source_code, "lxml")
