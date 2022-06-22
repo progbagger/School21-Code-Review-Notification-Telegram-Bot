@@ -132,18 +132,33 @@ async def send_agenda(message: types.Message):
             "Для получения сводки необходимо сперва зарегистрироваться. Ты можешь сделать это с помощью команды /register.",
         )
     else:
-        messg = await bot.send_message(message.chat.id, "Собираю информацию...")
+        messg = await bot.send_message(
+            message.chat.id, "*Собираю информацию...*\n\n" + "_[1/2] - авторизация_"
+        )
         d = datetime.datetime.today()
         d = d.strftime("%d.%m.%y")
         events = wb.get_today_events(user_info["login"], user_info["password"])
-        if not events:
-            msg = f"*{d}*\n\n" + "На сегодня у тебя не запланировано никаких событий."
+        if events is None:
+            await bot.edit_message_text(
+                "Возникли проблемы с авторизацией. Попробуй позже.\n\n"
+                + f"_Если не получится позже, напиши *Создателю*: @{config.OWNER}_"
+            )
         else:
-            msg = f"*{d}*\n\n" + "На сегодня у тебя следующие события:\n"
-            for event in events:
-                msg += f"- *{event['time']}* - _{event['event']}_\n"
-            msg.strip("\n")
-        await bot.edit_message_text(msg, messg.chat.id, messg.id)
+            await bot.edit_message_text(
+                "*Собираю информацию...*\n\n" + "_[2/2] - получение данных_",
+                message.chat.id,
+                messg.id,
+            )
+            if events == []:
+                msg = (
+                    f"*{d}*\n\n" + "На сегодня у тебя не запланировано никаких событий."
+                )
+            else:
+                msg = f"*{d}*\n\n" + "На сегодня у тебя следующие события:\n"
+                for event in events:
+                    msg += f"• *{event['start_time']}* - *{event['end_time']}* — _{event['event']}_\n"
+                msg.strip("\n")
+            await bot.edit_message_text(msg, messg.chat.id, messg.id)
 
 
 async def handle_unknown(message: types.Message):

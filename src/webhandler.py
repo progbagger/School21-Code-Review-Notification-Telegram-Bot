@@ -28,15 +28,16 @@ def auth_into_platform(
         elem = driver.find_element(by=By.NAME, value="password")
         elem.send_keys(password)
         elem.send_keys(Keys.ENTER)
-        sleep(2)
+        print("STEP 1")
+        sleep(5)
         if "auth.sberclass.ru" in driver.current_url:
             return None
         driver.get(calendar)
         sleep(5)
+        print("STEP 2")
         source_code = driver.page_source
         driver.close()
-        with open("page.html", "w") as page:
-            page.write(source_code)
+        print("STEP 3")
         return source_code
 
 
@@ -76,16 +77,33 @@ def get_ppr_list(source_code: str):
     else:
         events_list = list(dict())
         for event in current_date_column.children:
+            style_str = event.get("style").split(";")
+            height = int(style_str[1][9:-2]) // 14
             events_list.append(
                 {
-                    "time": event.find_next("div").text,
+                    "end_time": "garbage",
+                    "start_time": event.find_next("div").text,
                     "event": event.find_next("div").find_next("div").text,
                 }
             )
+            start_time = events_list[-1]["start_time"].split(":")
+            start_time = int(start_time[0]) * 60 + int(start_time[1])
+            end_time = start_time + height * 15
+            hour, min = end_time // 60, end_time % 60
+            hour = str(hour)
+            if len(hour) < 2:
+                hour = "0" + hour
+            min = str(min)
+            if len(min) == 1:
+                min += "0"
+            end_time = hour + ":" + min
+            events_list[-1]["end_time"] = end_time
         return events_list
 
 
 def get_today_events(username: str, password: str):
     source_code = auth_into_platform(username=username, password=password)
-    events_list = get_ppr_list(source_code)
-    return events_list
+    if source_code is None:
+        return None
+    else:
+        return get_ppr_list(source_code)
