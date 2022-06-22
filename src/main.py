@@ -125,13 +125,18 @@ async def check_registration_handler(message: types.Message):
 
 @bot.message_handler(commands=["agenda"])
 async def send_agenda(message: types.Message):
+    print(f'Checking registration for user id "{message.chat.id}"...')
     user_info = db.read_from_db(str(message.chat.id))
     if not user_info:
+        print(f'User with id "{message.chat.id}" is not registered!')
         await bot.send_message(
             message.chat.id,
             "Для получения сводки необходимо сперва зарегистрироваться. Ты можешь сделать это с помощью команды /register.",
         )
     else:
+        print(f"Found login \"{user_info['login']}\" for id \"{message.chat.id}\"!")
+        print(f"Collecting info for user \"{user_info['login']}\"...")
+        print("- Authorization...")
         messg = await bot.send_message(
             message.chat.id, "*Собираю информацию...*\n\n" + "_[1/2] - авторизация_"
         )
@@ -139,13 +144,17 @@ async def send_agenda(message: types.Message):
         d = d.strftime("%d.%m.%y")
         events = wb.get_today_events(user_info["login"], user_info["password"])
         if events is None:
+            print("- Authorization failed!")
+            print(f"Failed to authorize user \"{user_info['login']}\"!")
             await bot.edit_message_text(
                 "Возникли проблемы с авторизацией. Попробуй позже.\n\n"
-                + f"_Если не получится позже, напиши *Создателю*: @{config.OWNER}_",
+                + f"_Если не получится позже, напиши Создателю: @{config.OWNER}_",
                 message.chat.id,
                 messg.id,
             )
         else:
+            print("- Authorization success!")
+            print(f"Collecting info for username \"{user_info['login']}\"...")
             await bot.edit_message_text(
                 "*Собираю информацию...*\n\n" + "_[2/2] - получение данных_",
                 message.chat.id,
@@ -160,6 +169,7 @@ async def send_agenda(message: types.Message):
                 for event in events:
                     msg += f"• *{event['start_time']}* - *{event['end_time']}* — _{event['event']}_\n"
                 msg.strip("\n")
+            print(f"Ended collecting info for username \"{user_info['login']}\".")
             await bot.edit_message_text(msg, messg.chat.id, messg.id)
 
 

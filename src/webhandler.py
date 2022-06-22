@@ -30,16 +30,18 @@ def auth_into_platform(
         elem = driver.find_element(by=By.NAME, value="password")
         elem.send_keys(password)
         elem.send_keys(Keys.ENTER)
-        print("STEP 1")
+        print(f"Trying to authorizate user \"{username}\"...")
         sleep(5)
         if "auth.sberclass.ru" in driver.current_url:
+            print("Authorization failed!")
             return None
+        print("Authorization success!")
         driver.get(calendar)
         sleep(5)
-        print("STEP 2")
+        # Need to somehow check if page loaded fully and successfully
+        print(f"Getting calendar page data for user \"{username}\"...")
         source_code = driver.page_source
         driver.close()
-        print("STEP 3")
         return source_code
 
 
