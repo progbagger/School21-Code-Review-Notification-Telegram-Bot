@@ -19,12 +19,11 @@ op.add_argument("--headless")
 def auth_into_platform(
     driver: webdriver.Chrome = None,
     username: str = "elenemar",
-    password: str = "RepusSotnad1702",
 ):
     if not driver:
         driver = webdriver.Chrome(executable_path="chromedriver", options=op)
     if driver.current_url != link:
-        driver.get(link)
+        driver.get(link)  # link = "https://edu.21-school.ru"
         elem = driver.find_element(by=By.NAME, value="username")
         elem.send_keys(f"{username}@student.21-school.ru")
         elem = driver.find_element(by=By.NAME, value="password")
