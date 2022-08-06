@@ -16,10 +16,7 @@ op.add_argument("--headless")
 
 
 # Function to authentificate into platform
-def auth_into_platform(
-    driver: webdriver.Chrome = None,
-    username: str = "elenemar",
-):
+def auth_into_platform(username: str, password: str, driver: webdriver.Chrome = None):
     if not driver:
         driver = webdriver.Chrome(executable_path="chromedriver", options=op)
     if driver.current_url != link:
